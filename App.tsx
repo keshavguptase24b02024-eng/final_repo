@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import HomePage from './components/HomePage';
 import Dashboard from './components/Dashboard';
+import MapsPage from './components/MapsPage';
 import DataUploader from './components/DataUploader';
 import SampleInputForm from './components/SampleInputForm';
 import { SampleData, Standard, AnalysisResult } from './types';
@@ -10,14 +11,14 @@ import { calculateIndices } from './services/calculationService';
 import { getAnalysisFromGemini } from './services/geminiService';
 import { PRELOADED_SAMPLES } from './services/preloadedData';
 
-type View = 'home' | 'dashboard';
+type View = 'home' | 'dashboard' | 'maps';
 
 const App: React.FC = () => {
   const [sampleData, setSampleData] = useState<SampleData[]>([]);
   const [currentView, setCurrentView] = useState<View>('home');
 
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
-  const [selectedStandard, setSelectedStandard] = useState<Standard>(STANDARDS.WHO);
+  const [selectedStandard, setSelectedStandard] = useState<Standard>(STANDARDS.CGWB);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [geminiAnalysis, setGeminiAnalysis] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -28,6 +29,13 @@ const App: React.FC = () => {
   const handleUseSampleData = () => {
     setSampleData(PRELOADED_SAMPLES);
     setCurrentView('dashboard');
+  };
+  
+  const handleViewMaps = () => {
+    if (sampleData.length === 0) {
+      setSampleData(PRELOADED_SAMPLES);
+    }
+    setCurrentView('maps');
   };
   
   const handleGoHome = () => {
@@ -83,7 +91,7 @@ const App: React.FC = () => {
   };
   
   const handleAddSample = (sample: SampleData) => {
-      setSampleData(prevData => [...prevData, sample]);
+      setSampleData(() => [sample]); // Force complete state replacement
       setCurrentView('dashboard');
       closeModal();
   };
@@ -99,6 +107,14 @@ const App: React.FC = () => {
                 onUploadClick={handleUploadClick} 
                 onManualClick={handleManualClick} 
                 onUseSampleData={handleUseSampleData}
+                onViewMaps={handleViewMaps}
+            />
+        ) : currentView === 'maps' ? (
+            <MapsPage 
+                analysisResults={analysisResults}
+                onGoHome={handleGoHome}
+                onUploadClick={handleUploadClick}
+                onManualClick={handleManualClick}
             />
         ) : (
             <Dashboard 
@@ -108,7 +124,6 @@ const App: React.FC = () => {
                 selectedStandard={selectedStandard}
                 onStandardChange={handleStandardChange}
                 errorMessage={errorMessage}
-                // Fix: Corrected prop names to match component definition (camelCase).
                 onUploadClick={handleUploadClick}
                 onManualClick={handleManualClick}
                 onGoHome={handleGoHome}

@@ -7,6 +7,7 @@ interface HomePageProps {
   onUploadClick: () => void;
   onManualClick: () => void;
   onUseSampleData: () => void;
+  onViewMaps: () => void;
 }
 
 const GlobeDisplay: React.FC = () => {
@@ -150,7 +151,7 @@ const GlobeDisplay: React.FC = () => {
     return <div ref={mountRef} className="w-full h-full min-h-[32rem] absolute -right-1/4 top-1/2 -translate-y-1/2 opacity-70 md:opacity-100 md:relative md:right-0 md:top-0 md:translate-y-0" />;
 };
 
-const HomePage: React.FC<HomePageProps> = ({ onUploadClick, onManualClick, onUseSampleData }) => {
+const HomePage: React.FC<HomePageProps> = ({ onUploadClick, onManualClick, onUseSampleData, onViewMaps }) => {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-white">
         <div aria-hidden="true" className="absolute inset-0 z-0">
@@ -166,7 +167,7 @@ const HomePage: React.FC<HomePageProps> = ({ onUploadClick, onManualClick, onUse
                     Assess Groundwater Quality Instantly
                     </h1>
                     <p className="mt-6 text-xl text-slate-600 max-w-lg">
-                    Upload your sample data, select a standard, and get instant heavy metal pollution indices (HPI, HEI, Cd) with AI-driven insights and visualizations.
+                    Upload your sample data, select a standard, and get instant heavy metal pollution indices (HPI, HEI, HCI) with AI-driven insights and visualizations.
                     </p>
                     <div className="mt-10">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -183,6 +184,13 @@ const HomePage: React.FC<HomePageProps> = ({ onUploadClick, onManualClick, onUse
                             >
                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.414l-1.293 1.293a1 1 0 01-1.414-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L13 9.414V13h-1.5a1 1 0 01-1-1V9a1 1 0 011-1h.5a1 1 0 100-2h-5a1 1 0 000 2h.5a1 1 0 011 1v3a1 1 0 01-1 1H5.5z" clipRule="evenodd" /></svg>
                                 Enter Manually
+                            </button>
+                            <button
+                                onClick={onViewMaps}
+                                className="inline-flex items-center justify-center px-6 py-3.5 border border-slate-300 text-base font-semibold rounded-lg text-slate-700 bg-white/70 backdrop-blur-sm hover:bg-white shadow-md transition-transform transform hover:scale-105"
+                            >
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" clipRule="evenodd" /><path fillRule="evenodd" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" clipRule="evenodd" /></svg>
+                                View Maps
                             </button>
                         </div>
                         <p className="mt-6 text-sm text-slate-500">

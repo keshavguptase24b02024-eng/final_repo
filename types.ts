@@ -10,11 +10,19 @@ export enum Metal {
   Fe = 'Fe',
 }
 
+export type ConcentrationValue = {
+  value: number;
+  unit: string; // mg/L, ppm, ppb, μg/L
+  mgLValue: number; // converted value for calculations
+};
+
 export type SampleData = {
   id: string;
   latitude: number;
   longitude: number;
   concentrations: Record<Metal, number | undefined>;
+  // Optional: original concentrations with units for display
+  originalConcentrations?: Record<Metal, ConcentrationValue | undefined>;
 };
 
 export type StandardLimits = {

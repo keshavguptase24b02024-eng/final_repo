@@ -1,6 +1,6 @@
 import React from 'react';
 
-type View = 'reports' | 'map' | 'ai';
+type View = 'reports' | 'ai';
 
 interface HeaderProps {
     activeView: View;
@@ -36,13 +36,12 @@ const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, onUploadClic
         <button onClick={onGoHome} className="flex items-center space-x-3 group">
              <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-purple-500/30 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-purple-500/40 group-hover:scale-105">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-slate-800 tracking-tighter">
-             Aqua-Assess
-          </h1>
+            <span className="text-sm text-slate-600 font-medium">
+              ← Back to Dashboard
+            </span>
         </button>
 
         <div className="hidden md:flex items-center space-x-2">
@@ -50,11 +49,6 @@ const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, onUploadClic
                 label="Reports"
                 isActive={activeView === 'reports'}
                 onClick={() => setActiveView('reports')}
-            />
-            <NavButton
-                label="Map View"
-                isActive={activeView === 'map'}
-                onClick={() => setActiveView('map')}
             />
              <NavButton
                 label="AI Analysis"
