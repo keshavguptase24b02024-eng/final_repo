@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { SampleData, Metal } from '../types';
+import { SampleData, Metal, ConcentrationValue } from '../types';
 import { AVAILABLE_METALS } from '../constants';
+import { Unit, parseUnit, detectUnitForDataset, convertToMgL } from '../utils/unitConversion';
 
 interface DataUploaderProps {
   onDataLoaded: (data: SampleData[]) => void;
@@ -63,29 +64,57 @@ const DataUploader: React.FC<DataUploaderProps> = ({ onDataLoaded, setErrorMessa
         const header = lines[0].split(',').map(h => h.trim());
         const latIndex = header.indexOf('latitude');
         const lonIndex = header.indexOf('longitude');
+        const idIndex = header.findIndex(h => h.toLowerCase() === 'id' || h.toLowerCase() === 'sample_id' || h.toLowerCase() === 'sampleid');
 
         if (latIndex === -1 || lonIndex === -1) {
             setErrorMessage("CSV header must contain 'latitude' and 'longitude' columns.");
             return;
         }
 
+        // Find metal columns - will detect units for entire dataset later
         const metalIndices: Partial<Record<Metal, number>> = {};
+        let hasExplicitUnits = false;
+        let explicitUnit: Unit = Unit.MG_L;
+        
         AVAILABLE_METALS.forEach(metal => {
-            const index = header.findIndex(h => h.toLowerCase() === metal.toLowerCase());
-            if (index !== -1) {
-                metalIndices[metal] = index;
+            // Look for columns like "Pb", "Pb (mg/L)", "As (ppm)", "Fe (ppb)", etc.
+            const metalRegex = new RegExp(`^\s*${metal}\s*(\([^)]+\))?\s*$`, 'i');
+            const matchingIndex = header.findIndex(h => metalRegex.test(h.trim()));
+            
+            if (matchingIndex !== -1) {
+                const columnName = header[matchingIndex].trim();
+                
+                // Try to extract unit from column header like "Pb (mg/L)" or "As (ppm)"
+                const unitMatch = columnName.match(/\(([^)]+)\)/);
+                if (unitMatch && !hasExplicitUnits) {
+                    const parsedUnit = parseUnit(unitMatch[1]);
+                    if (parsedUnit) {
+                        explicitUnit = parsedUnit;
+                        hasExplicitUnits = true;
+                    }
+                }
+                
+                metalIndices[metal] = matchingIndex;
             }
         });
 
-        const samples: SampleData[] = [];
+        // First, collect all raw data to detect dataset-wide units
+        const rawSamples: Array<{ 
+          id: string; 
+          latitude: number; 
+          longitude: number; 
+          rawConcentrations: Record<Metal, number | undefined>; 
+        }> = [];
+
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',');
-          const concentrations: Record<Metal, number | undefined> = {} as Record<Metal, number | undefined>;
+          const rawConcentrations: Record<Metal, number | undefined> = {} as Record<Metal, number | undefined>;
           
+          // Collect raw values
           Object.entries(metalIndices).forEach(([metal, index]) => {
             const value = parseFloat(values[index]);
-            if (!isNaN(value)) {
-              concentrations[metal as Metal] = value;
+            if (!isNaN(value) && value > 0) {
+              rawConcentrations[metal as Metal] = value;
             }
           });
           
@@ -97,13 +126,56 @@ const DataUploader: React.FC<DataUploaderProps> = ({ onDataLoaded, setErrorMessa
               continue;
           }
 
-          samples.push({
-            id: `sample-${Date.now()}-${i}`,
+          // Use CSV ID if available, otherwise generate sequential ID
+          const csvId = idIndex !== -1 ? values[idIndex]?.trim() : null;
+          const sampleId = csvId && csvId !== '' ? csvId : (i).toString();
+          
+          rawSamples.push({
+            id: sampleId,
             latitude,
             longitude,
-            concentrations,
+            rawConcentrations,
           });
         }
+
+        // Detect unit for entire dataset
+        let datasetUnit: Unit;
+        if (hasExplicitUnits) {
+          datasetUnit = explicitUnit;
+        } else {
+          // Auto-detect based on all values in the dataset
+          datasetUnit = detectUnitForDataset(rawSamples.map(s => ({ concentrations: s.rawConcentrations })));
+        }
+
+        // Process all samples with the detected dataset unit
+        const samples: SampleData[] = rawSamples.map(rawSample => {
+          const concentrations: Record<Metal, number | undefined> = {} as Record<Metal, number | undefined>;
+          const originalConcentrations: Record<Metal, ConcentrationValue | undefined> = {} as Record<Metal, ConcentrationValue | undefined>;
+          
+          Object.entries(rawSample.rawConcentrations).forEach(([metal, value]) => {
+            if (value !== undefined) {
+              // Convert to mg/L for storage (standard unit)
+              const mgLValue = convertToMgL({ value, unit: datasetUnit });
+              concentrations[metal as Metal] = mgLValue;
+              
+              // Store original value with unit for display
+              originalConcentrations[metal as Metal] = {
+                value: value,
+                unit: datasetUnit,
+                mgLValue: mgLValue
+              };
+            }
+          });
+          
+          return {
+            id: rawSample.id,
+            latitude: rawSample.latitude,
+            longitude: rawSample.longitude,
+            concentrations,
+            originalConcentrations,
+          };
+        });
+        
         onDataLoaded(samples);
         setErrorMessage("");
       } catch (error) {
@@ -122,7 +194,11 @@ const DataUploader: React.FC<DataUploaderProps> = ({ onDataLoaded, setErrorMessa
   return (
     <div className="bg-white p-8 rounded-lg w-full">
       <h3 className="text-xl font-bold mb-1 text-slate-800">Upload CSV Data</h3>
-      <p className="text-sm text-slate-500 mb-6">Get started by uploading your groundwater sample data.</p>
+      <p className="text-sm text-slate-500 mb-4">Get started by uploading your groundwater sample data.</p>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+        <p className="text-xs text-blue-800 font-medium mb-1">Supported Units:</p>
+        <p className="text-xs text-blue-600">Headers can include units like: <code>Pb (ppb)</code>, <code>Fe (ppm)</code>, <code>Zn (mg/L)</code>, <code>As (μg/L)</code></p>
+      </div>
       <div className="flex items-center justify-center w-full">
         <label 
             htmlFor="csv-upload" 
@@ -137,7 +213,7 @@ const DataUploader: React.FC<DataUploaderProps> = ({ onDataLoaded, setErrorMessa
               <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
             </svg>
             <p className="mb-2 text-sm text-slate-500"><span className="font-semibold text-purple-600">Click to upload</span> or drag and drop</p>
-            <p className="text-xs text-slate-400">CSV file with latitude, longitude & metals</p>
+            <p className="text-xs text-slate-400">CSV file with latitude, longitude & metals (units auto-detected)</p>
           </div>
           <input id="csv-upload" type="file" className="hidden" accept=".csv" onChange={handleFileChange} />
         </label>

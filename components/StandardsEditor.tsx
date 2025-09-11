@@ -37,7 +37,7 @@ const StandardsEditor: React.FC<StandardsEditorProps> = ({ selectedStandard, onS
             </tr>
           </thead>
           <tbody>
-            {Object.entries(selectedStandard.limits).map(([metal, limits]) => (
+            {Object.entries(selectedStandard.limits).map(([metal, limits]: [string, any]) => (
               <tr key={metal} className="border-b border-slate-100 hover:bg-slate-50/50">
                 <td className="px-4 py-2.5 font-semibold text-slate-700">{metal}</td>
                 <td className="px-4 py-2.5">{limits.permissible}</td>

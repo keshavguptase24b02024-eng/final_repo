@@ -14,14 +14,14 @@ export const getAnalysisFromGemini = async (results: AnalysisResult[]): Promise<
   const prompt = `
     You are an expert environmental scientist specializing in groundwater contamination.
     Analyze the following heavy metal pollution data and provide a concise, actionable report.
-    The data includes calculated indices: HPI (Heavy Metal Pollution Index), HEI (Heavy Metal Evaluation Index), and Cd (Contamination Index).
+    The data includes calculated indices: HPI (Heavy Metal Pollution Index), HEI (Heavy Metal Evaluation Index), and HCI (Heavy Metal Contamination Index).
     
     Data:
     ${JSON.stringify(results, null, 2)}
 
     Based on the data, please provide the following in your report:
     1.  **Overall Summary:** A brief overview of the water quality across all samples.
-    2.  **Hotspot Identification:** Identify the sample locations (by ID and coordinates) with the highest pollution levels for each index (HPI, HEI, Cd).
+    2.  **Hotspot Identification:** Identify the sample locations (by ID and coordinates) with the highest pollution levels for each index (HPI, HEI, HCI).
     3.  **Key Pollutants:** Determine which heavy metals are the most significant contributors to the pollution across the dataset.
     4.  **Potential Risks & Sources:** Briefly mention the potential health risks associated with the key pollutants and suggest likely anthropogenic or natural sources.
     5.  **Recommendations:** Provide clear, actionable recommendations for further investigation, monitoring, and potential remediation.

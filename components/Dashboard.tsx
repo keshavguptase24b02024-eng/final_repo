@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import Header from './Header';
-import GuidelinesDisplay from './GuidelinesDisplay';
 import StandardsEditor from './StandardsEditor';
 import { ReportsView, MapView, AiAnalysisView } from './ResultsDisplay';
 import { Standard, AnalysisResult } from '../types';
 import { PRELOADED_SAMPLES } from '../services/preloadedData';
 import { calculateIndices } from '../services/calculationService';
 
-type ActiveView = 'reports' | 'map' | 'ai';
+type ActiveView = 'reports' | 'ai';
 
 interface DashboardProps {
   analysisResults: AnalysisResult[];
@@ -34,14 +33,11 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
   const renderActiveView = () => {
     switch (activeView) {
         case 'reports':
-            return <ReportsView results={props.analysisResults} />;
-        case 'map':
-            // MapView needs a container with a defined height to render correctly.
-            return (
-                <div className="h-[75vh] w-full">
-                    <MapView results={preloadedAnalysisResults} />
-                </div>
-            );
+            return <ReportsView 
+                results={props.analysisResults} 
+                selectedStandard={props.selectedStandard}
+                isManualData={props.analysisResults.length === 1}
+            />;
         case 'ai':
             return <AiAnalysisView geminiAnalysis={props.geminiAnalysis} isLoading={props.isLoading} />;
         default:
@@ -64,11 +60,13 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
         {/* Active view is rendered at the top of the main content flow */}
         {renderActiveView()}
         
-        <StandardsEditor
-          selectedStandard={props.selectedStandard}
-          onStandardChange={props.onStandardChange}
-        />
-        <GuidelinesDisplay />
+        {/* Only show StandardsEditor for CSV data (multiple samples) */}
+        {!(props.analysisResults.length === 1) && (
+          <StandardsEditor
+            selectedStandard={props.selectedStandard}
+            onStandardChange={props.onStandardChange}
+          />
+        )}
         {props.errorMessage && (
           <div className="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-xl relative" role="alert">
             <strong className="font-bold">Error: </strong>
